@@ -22,18 +22,34 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// set header to allow cross origin requests
+app.use(function(req, res, next) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, PATCH, DELETE, OPTIONS');
+  next();
+});
+
+// app.use bind a middleware to application, regardless of HTTP protocols
+// app.get is a part of app routing.
 app.use('/', index);
 app.use('/users', users);
 
+// Define error handle middleware functions
+// Error handle middleware is defined last, after defining routes.
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
-});
+app.use(notFoundRoutesErrorHandler);
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use(renderErrorMessage);
+
+function notFoundRoutesErrorHandler(req, res, next) {
+  var err = new Error('Not Found');
+  err.status = 404;
+  next(err)
+}
+
+function renderErrorMessage(err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
@@ -41,6 +57,6 @@ app.use(function(err, req, res, next) {
   // render the error page
   res.status(err.status || 500);
   res.render('error');
-});
+}
 
 module.exports = app;
